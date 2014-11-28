@@ -1,0 +1,8 @@
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\bin\Debug\Knapsack.exe.config
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\bin\Debug\Knapsack.XML
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\bin\Debug\Knapsack.exe
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\bin\Debug\Knapsack.pdb
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\bin\Debug\FSharp.Core.dll
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\bin\Debug\FSharp.Core.xml
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\obj\Debug\Knapsack.exe
+C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Knapsack\Knapsack\obj\Debug\Knapsack.pdb

@@ -1,5 +1,7 @@
-﻿// Learn more about F# at http://fsharp.net
-// See the 'F# Tutorial' project for more help.
+﻿//
+// Hunt Graham
+// Knapsack problem, greedy algorithm heuristic
+//
 
 type item = {
     weight : float;
@@ -14,7 +16,6 @@ type knapsack = {
 let sortByWeight lst =  
     lst |> List.sortBy (fun x -> x.value / x.weight) |> List.rev
 
-//let rec inits (lst : int List) (accum : int List) : (int List) List =
 let initsOuter lst =
     let rec inits lst accum =
         match lst with
@@ -39,6 +40,17 @@ let findBest2 (nap:knapsack) =
     |> last
 
 // Recursive way
+let findBestRec (nap: knapsack) = 
+    let rec findRec items sum accum =
+        match items with
+        | head :: [] ->
+            if head.weight < nap.limit then (accum @ [head]) else accum
+        | head :: tail -> 
+            let newSum = sum + head.weight
+            if newSum < nap.limit then findRec tail newSum (accum @ [head]) else accum
+        | [] -> failwith "empty list."
+    findRec nap.itmes 0.0 []
+    
 
 let i1 = {weight = 4.0; value = 10.0;}
 let i2 = {weight = 5.0; value = 10.0;}
@@ -54,5 +66,6 @@ let k = {
 
 [<EntryPoint>]
 let main argv = 
+    let res = findBestRec k
     printfn "%A" argv
     0 // return an integer exit code
