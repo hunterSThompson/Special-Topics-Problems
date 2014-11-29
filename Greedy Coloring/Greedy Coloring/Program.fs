@@ -6,18 +6,20 @@
 type Color = int option
 
 type Node = {
-    Color : Color
+    mutable Color: Color
+    Index: int
     // Maybe index too.
 }
 
 type Edge = {
-    Src : Node;
-    Dst : Node;
+    Src: Node;
+    Dst: Node;
 }
 
 type Graph = {
-    edges : Edge List
-    nodes: Node List
+    numColors: int;
+    edges: Edge List
+    mutable nodes: Node List
 }
 
 //
@@ -66,10 +68,47 @@ let sortNodes (nodes: Node List) (es: Edge List) : Node List =
 // Check conflicts of neighbors if it is set to this Color.
 // Will return true if there are conflics.
 //
-let checkConflicts (target:Node) (edges:Edge List) (color:Color) : bool =
+let checkConflicts (target: Node) (edges: Edge List) (color: Color) : bool =
     edges
     |> getNebNodes target
     |> List.exists (fun x -> x.Color = color) 
+
+
+//
+// Pick first color to not cause any conflicts. If all conflicts
+// cause conflicts, pick the last color. 
+//
+let findBestColor (targetNode: Node) (graph: Graph) =
+    let edges = graph.edges
+    //let mutable nodes =  sortNodes graph.nodes graph.edges
+    let mutable nodes =  graph.nodes
+
+    //
+    let mutable bestColor = Some (graph.numColors-1) 
+
+    for i = 0 to graph.numColors-1 do
+        // Set this color
+        nodes.[targetNode.Index].Color <- Some i 
+        // Get neighbors
+        let nebs = getNebNodes targetNode graph.edges
+        // Check conflicts
+        let hasConflicts = checkConflicts targetNode graph.edges (Some i)
+        // If there aren't any conflicts, this is the the one
+        if hasConflicts then
+            bestColor <- (Some i)
+    bestColor
+
+
+//let mutfunc (x: mutable int) : () = x <- 1
+
+//let thing = ref 1
+//let mutnode = ref {Color = Some 1}
+
+//let nodelist = [ref {Color = Some 1}; ref {Color = Some 2};]
+//let mutable ndlst = [ref {Color = Some 1}; ref {Color = Some 2};]
+//let mutable ndlst2 = [{Color = Some 1}; {Color = Some 2};]
+//let item1 = ndlst2.[0]
+
 
 (*
 let checkConflicts (target:Node) (es:Edge List) (color:Color) : bool =
@@ -98,16 +137,14 @@ let checkConflicts (target:Node) (es:Edge List) (color:Color) : bool =
 //  5)    Try each color... if no conflicts of this nodes neighbors then take it. If not continue. If none found w/ conflicts, take last color.
 //
 
-let solve 
 
 
-
-let n1 = { Color = Some 1; }
-let n2 = { Color = Some 2; }
-let n3 = { Color = Some 3; }
-let n4 = { Color = Some 4; }
-let n5 = { Color = Some 5; }
-let n6 = { Color = Some 6; }
+let n1 = { Color = Some 1; Index = 1;}
+let n2 = { Color = Some 2; Index = 2;}
+let n3 = { Color = Some 3; Index = 3;}
+let n4 = { Color = Some 4; Index = 4;}
+let n5 = { Color = Some 5; Index = 5;}
+let n6 = { Color = Some 6; Index = 6;}
 
 let e1 = { Src = n1; Dst = n2; }
 let e2 = { Src = n1; Dst = n3; }
@@ -124,7 +161,9 @@ let v = getNebNodes n1 es
 
 [<EntryPoint>]
 let main argv = 
-    checkConflicts n1 es ns (Some 2) |> ignore
+    checkConflicts n1 es (Some 2) |> ignore
+    print 10
     printfn "%A" argv
+    let inp = System.Console.ReadLine()
     0 // return an integer exit code
     
