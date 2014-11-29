@@ -13,43 +13,61 @@ type knapsack = {
     itmes: item List;
 }
 
-let sortByWeight lst =  
+//
+// Sort items by the value to weight ratio.
+//
+let sortByRatio lst =  
     lst |> List.sortBy (fun x -> x.value / x.weight) |> List.rev
 
-let initsOuter lst =
-    let rec inits lst accum =
+
+//
+// Returns all initial segments of passed list
+// For example [1, 2, 3] -> [ [1], [1,2], [1,2,3] ]
+//
+let inits lst =
+    let rec initRec lst accum =
         match lst with
         | head :: tail -> 
             let tempLst = accum @ [head]
-            [tempLst] @ inits tail tempLst 
+            [tempLst] @ initRec tail tempLst 
         | [] -> []
-    inits lst []
+    initRec lst []
 
+//
+// Returns the last element of a list. Why is this not a standard library function?
+//
 let rec last = function
     | hd :: [] -> hd
-    | hd :: tl -> last tl
+    | hd :: tail -> last tail
     | _ -> failwith "Empty list."
 
-let getSum (items : item List) = List.sumBy (fun x -> x.weight) items 
+let getSum = List.sumBy (fun x -> x.weight)
 
-let findBest2 (nap:knapsack) =
+//
+// Slower solve function. Wouldn't work for bigger solution sets.
+//
+let findBestSlow (nap:knapsack) =
     nap.itmes
-    |> sortByWeight
-    |> initsOuter
+    |> sortByRatio
+    |> inits
     |> List.filter (fun x -> getSum x <= nap.limit) 
     |> last
 
-// Recursive way
-let findBestRec (nap: knapsack) = 
+//
+// Solver function, orders items by value to weight ratio, then
+// take items until weight limit is hit.
+//
+let findBestRec (nap:knapsack) = 
     let rec findRec items sum accum =
         match items with
-        | head :: [] ->
+        | head :: [] -> 
             if head.weight < nap.limit then (accum @ [head]) else accum
-        | head :: tail -> 
+        | head :: tail ->  
             let newSum = sum + head.weight
             if newSum < nap.limit then findRec tail newSum (accum @ [head]) else accum
-        | [] -> failwith "empty list."
-    findRec nap.itmes 0.0 []
+        | [] -> failwith "Empty list!"
+    let sortedList = sortByRatio nap.itmes
+    findRec sortedList 0.0 []
     
 
 let i1 = {weight = 4.0; value = 10.0;}
