@@ -80,9 +80,8 @@ let checkConflicts (target: Node) (edges: Edge List) (color: Color) : bool =
 //
 let findBestColor (targetNode: Node) (graph: Graph) =
     let edges = graph.edges
-    //let mutable nodes =  sortNodes graph.nodes graph.edges
     let mutable nodes =  graph.nodes
-
+    
     //
     let mutable bestColor = Some (graph.numColors-1) 
 
@@ -98,6 +97,24 @@ let findBestColor (targetNode: Node) (graph: Graph) =
             bestColor <- (Some i)
     bestColor
 
+
+//
+// Solver function. Logic is right but need to figure out how to handle refs.
+// 
+// Problem:  Need to figure out a way so that nodes within edges get updated.
+//
+let solve (g: Graph) =
+    let mutable sortedNodes = sortNodes g.nodes g.edges
+    for node in sortedNodes do
+        if node.Color <> None then
+            node.Color <- Some 0
+            let neighbors = getNebNodes node g.edges
+            for neb in neighbors do
+                let col = findBestColor neb g
+                neb.Color <- col
+    sortedNodes
+
+            
 
 //let mutfunc (x: mutable int) : () = x <- 1
 
@@ -162,7 +179,6 @@ let v = getNebNodes n1 es
 [<EntryPoint>]
 let main argv = 
     checkConflicts n1 es (Some 2) |> ignore
-    print 10
     printfn "%A" argv
     let inp = System.Console.ReadLine()
     0 // return an integer exit code
