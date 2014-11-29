@@ -1,6 +1,8 @@
 ﻿// Learn more about F# at http://fsharp.net
 // See the 'F# Tutorial' project for more help.
 
+
+
 type Color = int option
 
 type Node = {
@@ -13,17 +15,23 @@ type Edge = {
     Dst : Node;
 }
 
+type Graph = {
+    edges : Edge List
+    nodes: Node List
+}
+
+//
+// Check if this node is in this edge
+//
 let isNeighbor edge index = 
-    if edge.Src = index || edge.Dst = index then
-        true 
-    else 
-        false
+    edge.Src = index || edge.Dst = index
 
 //
 // Concat implementation because I can't figure out how to use List.concat (sigh)
 //
 let foldFunc state T = state @ T
 let concat lst = List.fold foldFunc [] lst
+
 
 //
 // If this edge contains the node, return the neighbording node.
@@ -38,12 +46,9 @@ let getNeighbor (edge:Edge) (node:Node) =
         []
 
 //
-// This currently returns a list of lists. Can't figure out how to use List.concat. Sigh.
+// Get neighboring nodes. Wonder if this works with big solution sets, we shall see.
 //
 let getNebNodes target lst = lst |> List.map (fun x -> getNeighbor x target) |> concat
-
-
-
 
 let getNumNeighbors target lst = lst |> getNebNodes target |> List.length
 
@@ -54,14 +59,20 @@ let getNumNodes lst index = lst |> List.filter (fun x -> isNeighbor x index) |> 
 //
 // Sort nodes by number of neighbors
 //
-let sortNodes (nodes:Node List) (es : Edge List) : Node List = 
+let sortNodes (nodes: Node List) (es: Edge List) : Node List = 
     nodes |> List.sortBy (fun x -> getNumNodes es x) |> List.rev
 
 //
 // Check conflicts of neighbors if it is set to this Color.
 // Will return true if there are conflics.
 //
-let checkConflicts (target:Node) (es:Edge List) (ns:Node List) (color:Color) : bool =
+let checkConflicts (target:Node) (edges:Edge List) (color:Color) : bool =
+    edges
+    |> getNebNodes target
+    |> List.exists (fun x -> x.Color = color) 
+
+(*
+let checkConflicts (target:Node) (es:Edge List) (color:Color) : bool =
     let rec checkNodes nodes =
         match nodes with
         | head::tail -> 
@@ -70,8 +81,10 @@ let checkConflicts (target:Node) (es:Edge List) (ns:Node List) (color:Color) : b
                 true
             else
                 checkNodes tail
-        | [] -> failwith "Unconnected node."
-    checkNodes ns
+        | [] -> false
+    checkNode ns 
+
+*)
 
 
 
@@ -84,6 +97,9 @@ let checkConflicts (target:Node) (es:Edge List) (ns:Node List) (color:Color) : b
 //  4) foreach neighbor of node
 //  5)    Try each color... if no conflicts of this nodes neighbors then take it. If not continue. If none found w/ conflicts, take last color.
 //
+
+let solve 
+
 
 
 let n1 = { Color = Some 1; }
@@ -108,6 +124,7 @@ let v = getNebNodes n1 es
 
 [<EntryPoint>]
 let main argv = 
+    checkConflicts n1 es ns (Some 2) |> ignore
     printfn "%A" argv
     0 // return an integer exit code
     
