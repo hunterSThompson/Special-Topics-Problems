@@ -18,7 +18,7 @@ type Edge = {
 type Graph = {
     numColors: int;
     edges: Edge List
-    mutable nodes: Node List
+    nodes: Node ref List
 }
 
 
@@ -63,11 +63,11 @@ let readFile filename =
     //let numNodes = allLines.[1] |> int
     //let edgePairs = takeRange allLines 2 (allLines.Length-1)
     let nodes = createNodes (allLines.Length-1)
-    //nodes
     //let nodes = createNodes allLines.Length
     //let edges = edgePairs |> List.map (fun x -> parse x)
-    let lines = allLines |> List.map (fun x -> parse x nodes)
-    lines
+    let edges = allLines |> List.map (fun x -> parse x nodes)
+    { numColors = 3; edges = edges; nodes = nodes}
+    //lines
 
 //let read = readFile "C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Greedy Coloring\Greedy Coloring\Node.txt"
 
@@ -111,8 +111,8 @@ let getNumNodes lst index = lst |> List.filter (fun x -> isNeighbor x index) |> 
 //
 // Sort nodes by number of neighbors
 //
-let sortNodes (nodes: Node List) (es: Edge List) : Node List = 
-    nodes |> List.sortBy (fun x -> getNumNodes es (ref x)) |> List.rev
+let sortNodes (nodes: Node ref List) (es: Edge List) : Node ref List = 
+    nodes |> List.sortBy (fun x -> getNumNodes es x) |> List.rev
 
 //
 // Check conflicts of neighbors if it is set to this Color.
@@ -137,7 +137,7 @@ let findBestColor (targetNode: Node) (graph: Graph) =
 
     for i = 0 to graph.numColors-1 do
         // Set this color
-        nodes.[targetNode.Index].Color <- Some i 
+        (!nodes.[targetNode.Index]).Color <- Some i 
         // Get neighbors
         let nebs = getNebNodes targetNode graph.edges
         // Check conflicts
@@ -156,9 +156,9 @@ let findBestColor (targetNode: Node) (graph: Graph) =
 let solve (g: Graph) =
     let mutable sortedNodes = sortNodes g.nodes g.edges
     for node in sortedNodes do
-        if node.Color <> None then
-            node.Color <- Some 0
-            let neighbors = getNebNodes node g.edges
+        if (!node).Color <> None then
+            (!node).Color <- Some 0 // TODO check this. might not work
+            let neighbors = getNebNodes !node g.edges
             for neb in neighbors do
                 let col = findBestColor !neb g
                 (!neb).Color <- col
