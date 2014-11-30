@@ -1,7 +1,6 @@
 ﻿// Learn more about F# at http://fsharp.net
 // See the 'F# Tutorial' project for more help.
-
-
+open System.IO;
 
 type Color = int option
 
@@ -12,8 +11,8 @@ type Node = {
 }
 
 type Edge = {
-    Src: Node;
-    Dst: Node;
+    Src: Node ref;
+    Dst: Node ref;
 }
 
 type Graph = {
@@ -21,6 +20,57 @@ type Graph = {
     edges: Edge List
     mutable nodes: Node List
 }
+
+
+let mapToRefList lst = 
+    lst |> List.map (fun x -> ref x)
+
+
+//
+// Take subset of a list by start/end index.
+//
+let takeRange<'T> (lst: List<'T>) start _end =
+    if start < 0 || _end > lst.Length-1 then
+        failwith "index out of range."
+    else
+        [start.._end] |> List.map (fun x -> lst.[x])
+
+let split (str: string) = str.Split [|',';|] 
+let trim (str: string) = str.Trim()
+
+let parse line (nodes: Node ref List) =
+    let splits = line |> split
+    let src = splits.[0] |> trim |> int
+    let dst = splits.[1] |> trim |> int
+    {Src = nodes.[src - 1]; Dst = nodes.[dst - 1] }
+
+let createNodes (n:int) =
+    [0..n] |> List.map (fun x -> ref {Color = None; Index = x})
+
+let sns = createNodes 10
+
+(*
+let takeRange2<'T> lst start _end =
+    let mutable res = new List<'T>()
+    for i = start to _end do
+        res.Add(lst.[i])
+    res
+*)
+
+let readFile filename =
+    let allLines = [for i in File.ReadAllLines filename -> i]
+    //let numColors = allLines.[0] |> int
+    //let numNodes = allLines.[1] |> int
+    //let edgePairs = takeRange allLines 2 (allLines.Length-1)
+    let nodes = createNodes (allLines.Length-1)
+    //nodes
+    //let nodes = createNodes allLines.Length
+    //let edges = edgePairs |> List.map (fun x -> parse x)
+    let lines = allLines |> List.map (fun x -> parse x nodes)
+    lines
+
+//let read = readFile "C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Greedy Coloring\Greedy Coloring\Node.txt"
+
 
 //
 // Check if this node is in this edge
@@ -40,9 +90,9 @@ let concat lst = List.fold foldFunc [] lst
 // If not, return an empty list
 //
 let getNeighbor (edge:Edge) (node:Node) =
-    if edge.Src = node then
+    if !edge.Src = node then
         [edge.Dst]
-    elif edge.Dst = node then
+    elif !edge.Dst = node then
         [edge.Src]
     else
         []
@@ -62,7 +112,7 @@ let getNumNodes lst index = lst |> List.filter (fun x -> isNeighbor x index) |> 
 // Sort nodes by number of neighbors
 //
 let sortNodes (nodes: Node List) (es: Edge List) : Node List = 
-    nodes |> List.sortBy (fun x -> getNumNodes es x) |> List.rev
+    nodes |> List.sortBy (fun x -> getNumNodes es (ref x)) |> List.rev
 
 //
 // Check conflicts of neighbors if it is set to this Color.
@@ -71,7 +121,7 @@ let sortNodes (nodes: Node List) (es: Edge List) : Node List =
 let checkConflicts (target: Node) (edges: Edge List) (color: Color) : bool =
     edges
     |> getNebNodes target
-    |> List.exists (fun x -> x.Color = color) 
+    |> List.exists (fun x -> (!x).Color = color) 
 
 
 //
@@ -110,8 +160,8 @@ let solve (g: Graph) =
             node.Color <- Some 0
             let neighbors = getNebNodes node g.edges
             for neb in neighbors do
-                let col = findBestColor neb g
-                neb.Color <- col
+                let col = findBestColor !neb g
+                (!neb).Color <- col
     sortedNodes
 
             
@@ -156,6 +206,7 @@ let checkConflicts (target:Node) (es:Edge List) (color:Color) : bool =
 
 
 
+(*
 let n1 = { Color = Some 1; Index = 1;}
 let n2 = { Color = Some 2; Index = 2;}
 let n3 = { Color = Some 3; Index = 3;}
@@ -175,10 +226,12 @@ let es = [e1; e2; e3; e4; e5; e6]
 
 //let v = getContainingEdges es n1
 let v = getNebNodes n1 es 
+*)
 
 [<EntryPoint>]
 let main argv = 
-    checkConflicts n1 es (Some 2) |> ignore
+    //checkConflicts n1 es (Some 2) |> ignore
+    let edges = readFile "C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Greedy Coloring\Greedy Coloring\Node.txt"
     printfn "%A" argv
     let inp = System.Console.ReadLine()
     0 // return an integer exit code
