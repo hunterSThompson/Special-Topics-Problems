@@ -7,7 +7,6 @@ type Color = int option
 type Node = {
     mutable Color: Color
     Index: int
-    // Maybe index too.
 }
 
 type Edge = {
@@ -22,52 +21,46 @@ type Graph = {
 }
 
 
-let mapToRefList lst = 
-    lst |> List.map (fun x -> ref x)
-
 
 //
-// Take subset of a list by start/end index.
+// Take subset of a list by start/end index. Won't work with generic for some reason
 //
+let takeRange (lst: List<string>) start _end =
+    if start < 0 || _end > lst.Length-1 then
+        failwith "index out of range."
+    else
+        [start.._end] |> List.map (fun x -> lst.[x])
+(*
 let takeRange<'T> (lst: List<'T>) start _end =
     if start < 0 || _end > lst.Length-1 then
         failwith "index out of range."
     else
         [start.._end] |> List.map (fun x -> lst.[x])
+*)
 
-let split (str: string) = str.Split [|',';|] 
+
+//
+// Parse functions
+//
+let split (str: string) = str.Split [|' ';|] 
 let trim (str: string) = str.Trim()
 
 let parse line (nodes: Node ref List) =
     let splits = line |> split
     let src = splits.[0] |> trim |> int
     let dst = splits.[1] |> trim |> int
-    {Src = nodes.[src - 1]; Dst = nodes.[dst - 1] }
+    {Src = nodes.[src]; Dst = nodes.[dst] }
 
-let createNodes (n:int) =
-    [0..n] |> List.map (fun x -> ref {Color = None; Index = x})
-
-let sns = createNodes 10
-
-(*
-let takeRange2<'T> lst start _end =
-    let mutable res = new List<'T>()
-    for i = start to _end do
-        res.Add(lst.[i])
-    res
-*)
+let createNodes (n: int) =
+    [0..n-1] |> List.map (fun x -> ref {Color = None; Index = x})
 
 let readFile filename =
-    let allLines = [for i in File.ReadAllLines filename -> i]
-    //let numColors = allLines.[0] |> int
-    //let numNodes = allLines.[1] |> int
-    //let edgePairs = takeRange allLines 2 (allLines.Length-1)
-    let nodes = createNodes (allLines.Length-1)
-    //let nodes = createNodes allLines.Length
-    //let edges = edgePairs |> List.map (fun x -> parse x)
-    let edges = allLines |> List.map (fun x -> parse x nodes)
-    { numColors = 3; edges = edges; nodes = nodes}
-    //lines
+    let allLines = [for i in File.ReadAllLines filename -> i] // Read all lines
+    let numColors = allLines.[0] |> int // Read number of colors
+    let edgePairs = takeRange allLines 1 (allLines.Length-1) // Get remaining lines
+    let nodes = createNodes (allLines.Length - 1) // Create node list
+    let edges = edgePairs |> List.map (fun x -> parse x nodes) // Parse each line
+    { numColors = numColors; edges = edges; nodes = nodes} // Create graph object
 
 //let read = readFile "C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Greedy Coloring\Greedy Coloring\Node.txt"
 
@@ -89,7 +82,7 @@ let concat lst = List.fold foldFunc [] lst
 // If this edge contains the node, return the neighbording node.
 // If not, return an empty list
 //
-let getNeighbor (edge:Edge) (node:Node) =
+let getNeighbor (edge: Edge) (node: Node) =
     if !edge.Src = node then
         [edge.Dst]
     elif !edge.Dst = node then
@@ -100,11 +93,11 @@ let getNeighbor (edge:Edge) (node:Node) =
 //
 // Get neighboring nodes. Wonder if this works with big solution sets, we shall see.
 //
-let getNebNodes target lst = lst |> List.map (fun x -> getNeighbor x target) |> concat
+let getNeighboringNodes target lst = lst |> List.map (fun x -> getNeighbor x target) |> concat
 
-let getNumNeighbors target lst = lst |> getNebNodes target |> List.length
-
-let getContainingEdges lst index = lst |> List.filter (fun x -> isNeighbor x index) 
+//
+//  Get the number
+//
 let getNumNodes lst index = lst |> List.filter (fun x -> isNeighbor x index) |> List.length 
 
 
@@ -118,10 +111,19 @@ let sortNodes (nodes: Node ref List) (es: Edge List) : Node ref List =
 // Check conflicts of neighbors if it is set to this Color.
 // Will return true if there are conflics.
 //
-let checkConflicts (target: Node) (edges: Edge List) (color: Color) : bool =
+let checkConflicts (targetNode: Node) (edges: Edge List) (color: Color) : bool =
     edges
-    |> getNebNodes target
+    |> getNeighboringNodes targetNode 
     |> List.exists (fun x -> (!x).Color = color) 
+
+let getAllConflicts (edges: Edge List) =
+    let edgesWithConfs = 
+        edges
+        |> List.filter (fun x -> x.Dst.contents.Color = x.Src.contents.Color)
+        |> List.length
+    edgesWithConfs / 2
+    //nodes
+    //|> List.map getNeighboringNodes 
 
 
 //
@@ -132,21 +134,31 @@ let findBestColor (targetNode: Node) (graph: Graph) =
     let edges = graph.edges
     let mutable nodes =  graph.nodes
     
-    //
-    let mutable bestColor = Some (graph.numColors-1) 
+    // Default the best color to the last color.
+    let mutable bestColor = Some (graph.numColors-1)
 
+    // foreach graph color...
     for i = 0 to graph.numColors-1 do
         // Set this color
-        (!nodes.[targetNode.Index]).Color <- Some i 
+        (!nodes.[targetNode.Index]).Color <- Some i  // Wait do I need to set this if we have func to 'try it out' first
         // Get neighbors
-        let nebs = getNebNodes targetNode graph.edges
+        let nebs = getNeighboringNodes targetNode graph.edges // Don't need this!!!
         // Check conflicts
         let hasConflicts = checkConflicts targetNode graph.edges (Some i)
         // If there aren't any conflicts, this is the the one
-        if hasConflicts then
+        if not hasConflicts then
             bestColor <- (Some i)
     bestColor
 
+//
+// Solving Algorithm:
+//
+//  1) sort nodes by num of neighbors
+//  2) foreach node:
+//  3) If colored continue, otherwise set to first color
+//  4) foreach neighbor of node
+//  5)    Try each color... if no conflicts of this nodes neighbors then take it. If not continue. If none found w/ conflicts, take last color.
+//
 
 //
 // Solver function. Logic is right but need to figure out how to handle refs.
@@ -156,13 +168,16 @@ let findBestColor (targetNode: Node) (graph: Graph) =
 let solve (g: Graph) =
     let mutable sortedNodes = sortNodes g.nodes g.edges
     for node in sortedNodes do
-        if (!node).Color <> None then
+        // If the node doesn't have a color...
+        if (!node).Color = None then
+            // Set to first color
             (!node).Color <- Some 0 // TODO check this. might not work
-            let neighbors = getNebNodes !node g.edges
+            // Get this nodes neighbors
+            let neighbors = getNeighboringNodes !node g.edges
+            // foreach neighbor, pick the color that will cause the least conflicts.
             for neb in neighbors do
-                let col = findBestColor !neb g
-                (!neb).Color <- col
-    sortedNodes
+                (!neb).Color <- findBestColor !neb g  //Pointers. Sigh
+    g
 
             
 
@@ -194,16 +209,6 @@ let checkConflicts (target:Node) (es:Edge List) (color:Color) : bool =
 
 
 
-//
-// Solving Algorithm:
-//
-//  1) sort nodes by num of neighbors
-//  2) foreach nodes...
-//  3) If colored continue, otherwise set to first color
-//  4) foreach neighbor of node
-//  5)    Try each color... if no conflicts of this nodes neighbors then take it. If not continue. If none found w/ conflicts, take last color.
-//
-
 
 
 (*
@@ -224,14 +229,16 @@ let e6 = { Src = n2; Dst = n6; }
 let ns = [n1; n2; n3; n4; n5; n6]
 let es = [e1; e2; e3; e4; e5; e6]
 
-//let v = getContainingEdges es n1
 let v = getNebNodes n1 es 
 *)
 
 [<EntryPoint>]
 let main argv = 
     //checkConflicts n1 es (Some 2) |> ignore
-    let edges = readFile "C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Greedy Coloring\Greedy Coloring\Node.txt"
+    let graph = readFile "C:\Users\Hunt\Documents\Visual Studio 2013\Projects\Special Topic Problems\Greedy Coloring\Greedy Coloring\Node.txt"
+    let solution = solve graph
+    let numconf = getAllConflicts solution.edges
+
     printfn "%A" argv
     let inp = System.Console.ReadLine()
     0 // return an integer exit code
